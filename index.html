@@ -2,125 +2,259 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Haven Paylaşım</title>
+<title>HAVEN PAYLAŞIM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <style>
-  body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
-  header { background:#1d8f1d; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; }
-  header h1 { margin:0; font-size:1.5rem; }
-  button { padding:8px 16px; border:none; background:#2ecc40; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer; }
-  button:hover { background:#27ae36; }
-  #server-list { max-width:900px; margin:20px auto; }
-  .server-card {
-    background:#fff; 
-    border-radius:30px; 
-    border: 3px solid #3b82f6; 
-    padding:15px 20px; 
-    margin-bottom:15px;
-    box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
   }
-  .server-header { display:flex; justify-content:space-between; align-items:center; }
-  .server-name {
-    font-size:1.2rem; 
-    font-weight:bold; 
+  h2 { margin: 0; }
+  button {
+    background: #4CAF50;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: bold;
+  }
+  button:hover {
+    background: #45a049;
+  }
+  .server-item {
+    border: 2px solid #2196F3;
+    border-radius: 20px;
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  .server-header {
+    font-weight: bold;
+    font-size: 18px;
     cursor: default;
+    color: #2196F3;
   }
-  .server-link-btn {
-    background:#3b82f6;
-    color:#fff;
-    padding:6px 12px;
-    border-radius:6px;
-    border:none;
-    cursor:pointer;
-    font-weight:bold;
+  .server-link {
+    color: #555;
+    margin-top: 5px;
+    display: block;
+    word-break: break-word;
+    text-decoration: none;
   }
-  .server-link-btn:hover { background:#2563eb; }
+  .server-link:hover {
+    text-decoration: underline;
+  }
+  /* Yorum ve oy bölümü */
+  .comments-section {
+    margin-top: 10px;
+  }
+  .comment {
+    background: #f0f8ff;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .comment button {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    background: #e74c3c;
+    border: none;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .vote-section {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .vote-btn {
+    cursor: pointer;
+    user-select: none;
+    font-size: 20px;
+  }
+  .vote-count {
+    font-weight: bold;
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>HAVEN PAYLAŞIM</h1>
-  <button id="add-server-btn">EKLE</button>
+  <h2>HAVEN PAYLAŞIM</h2>
+  <button id="btnAdd">EKLE</button>
 </header>
 
-<main id="server-list">Yükleniyor...</main>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+<div id="serversList"></div>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTHDOMAIN.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_BUCKET.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  const SUPABASE_URL = 'https://iweymvclgbtmnaglvgzp.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8';
 
-  const serverListEl = document.getElementById('server-list');
-  const addBtn = document.getElementById('add-server-btn');
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  addBtn.onclick = () => {
+  const serversList = document.getElementById('serversList');
+  const btnAdd = document.getElementById('btnAdd');
+
+  btnAdd.addEventListener('click', () => {
     window.location.href = 'ekle.html';
-  };
+  });
 
-  function createServerCard(doc) {
-    const data = doc.data();
+  // LocalStorage'da kullanıcının oy ve yorumlarını saklayacağız
+  // Her sunucu için key: vote_<serverID>, comment_<serverID>
 
-    const card = document.createElement('div');
-    card.className = 'server-card';
+  async function loadServers() {
+    serversList.innerHTML = 'Yükleniyor...';
+    const { data: servers, error } = await supabase
+      .from('servers')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const headerDiv = document.createElement('div');
-    headerDiv.className = 'server-header';
+    if(error){
+      serversList.innerHTML = 'Veri alınırken hata oluştu.';
+      console.error(error);
+      return;
+    }
+    if(!servers.length){
+      serversList.innerHTML = '<p>Henüz sunucu eklenmemiş.</p>';
+      return;
+    }
 
-    const nameEl = document.createElement('div');
-    nameEl.className = 'server-name';
-    nameEl.textContent = data.name;
-    headerDiv.appendChild(nameEl);
+    serversList.innerHTML = '';
+    servers.forEach(server => {
+      const div = document.createElement('div');
+      div.className = 'server-item';
 
-    const linkBtn = document.createElement('button');
-    linkBtn.className = 'server-link-btn';
-    linkBtn.textContent = 'LİNK';
-    linkBtn.onclick = () => window.open(data.link, '_blank');
-    headerDiv.appendChild(linkBtn);
+      // Sunucu adı (tıklanmaz, üstte)
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'server-header';
+      nameDiv.textContent = server.name;
+      div.appendChild(nameDiv);
 
-    card.appendChild(headerDiv);
+      // Link (tıklanabilir, altta)
+      const linkA = document.createElement('a');
+      linkA.href = server.link;
+      linkA.target = '_blank';
+      linkA.className = 'server-link';
+      linkA.textContent = server.link;
+      div.appendChild(linkA);
 
-    const linkText = document.createElement('div');
-    linkText.style.marginTop = '6px';
-    linkText.style.color = '#555';
-    linkText.textContent = data.link;
-    card.appendChild(linkText);
+      // Oy ve yorum bölümü
+      const voteCountKey = `vote_${server.id}`;
+      const commentKey = `comment_${server.id}`;
 
-    return card;
-  }
+      // Oy sayısını getir localstorage'dan ya da 0
+      let voteCount = parseInt(localStorage.getItem(voteCountKey)) || 0;
 
-  async function fetchServers() {
-    serverListEl.innerHTML = 'Yükleniyor...';
-    try {
-      const snapshot = await db.collection('servers').orderBy('createdAt', 'desc').get();
+      // Yorumları localstorage'dan dizi olarak alıyoruz
+      // Her kullanıcı sadece 1 yorum yapabilir, o da localStorage'da saklanır
+      let userComment = localStorage.getItem(commentKey) || '';
 
-      if (snapshot.empty) {
-        serverListEl.textContent = 'Henüz sunucu eklenmemiş.';
-        return;
+      const voteSection = document.createElement('div');
+      voteSection.className = 'vote-section';
+
+      const btnUp = document.createElement('span');
+      btnUp.className = 'vote-btn';
+      btnUp.textContent = '👍🏻';
+      btnUp.title = 'Oy Ver';
+      btnUp.style.userSelect = 'none';
+
+      const voteDisplay = document.createElement('span');
+      voteDisplay.className = 'vote-count';
+      voteDisplay.textContent = voteCount;
+
+      const btnDown = document.createElement('span');
+      btnDown.className = 'vote-btn';
+      btnDown.textContent = '👎🏻';
+      btnDown.title = 'Oy Kaldır';
+      btnDown.style.userSelect = 'none';
+
+      voteSection.appendChild(btnUp);
+      voteSection.appendChild(voteDisplay);
+      voteSection.appendChild(btnDown);
+
+      div.appendChild(voteSection);
+
+      // Yorum alanı
+      const commentsSection = document.createElement('div');
+      commentsSection.className = 'comments-section';
+
+      if(userComment){
+        const commentDiv = document.createElement('div');
+        commentDiv.className = 'comment';
+        commentDiv.textContent = userComment;
+
+        // Yorum sil butonu
+        const delBtn = document.createElement('button');
+        delBtn.textContent = 'X';
+        delBtn.title = 'Yorumu Sil';
+        delBtn.onclick = () => {
+          if(confirm('Yorumu silmek istediğine emin misin?')){
+            localStorage.removeItem(commentKey);
+            loadServers();
+          }
+        };
+        commentDiv.appendChild(delBtn);
+        commentsSection.appendChild(commentDiv);
+      } else {
+        // Yorum yoksa input ve ekleme butonu
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Yorumunuzu yazın...';
+        input.style.width = '80%';
+        input.style.marginRight = '10px';
+
+        const addCommentBtn = document.createElement('button');
+        addCommentBtn.textContent = 'Yorum Ekle';
+
+        addCommentBtn.onclick = () => {
+          const val = input.value.trim();
+          if(!val){
+            alert('Lütfen yorum yazın!');
+            return;
+          }
+          localStorage.setItem(commentKey, val);
+          loadServers();
+        };
+
+        commentsSection.appendChild(input);
+        commentsSection.appendChild(addCommentBtn);
       }
 
-      serverListEl.innerHTML = '';
-      snapshot.forEach(doc => {
-        const card = createServerCard(doc);
-        serverListEl.appendChild(card);
-      });
+      div.appendChild(commentsSection);
 
-    } catch (err) {
-      serverListEl.textContent = 'Sunucular yüklenirken hata oluştu: ' + err.message;
-    }
+      // Oy butonları tıklama işlemleri
+      btnUp.onclick = () => {
+        // Kullanıcı sadece 1 oy verebilir, eğer oy 0 ise 1 yapar, zaten 1 ise uyarı verir
+        if (voteCount === 0) {
+          localStorage.setItem(voteCountKey, '1');
+          loadServers();
+        } else {
+          alert('Zaten oy verdiniz!');
+        }
+      };
+      btnDown.onclick = () => {
+        if (voteCount === 1) {
+          localStorage.setItem(voteCountKey, '0');
+          loadServers();
+        } else {
+          alert('Henüz oy vermediniz!');
+        }
+      };
+
+      serversList.appendChild(div);
+    });
   }
 
-  fetchServers();
+  loadServers();
 </script>
 
 </body>
