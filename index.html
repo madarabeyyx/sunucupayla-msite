@@ -35,94 +35,21 @@
     font-weight:bold;
   }
   .server-link-btn:hover { background:#2563eb; }
-  .comments {
-    margin-top:10px;
-  }
-  .comment {
-    background:#f9f9f9; 
-    border-radius:12px; 
-    padding:6px 12px; 
-    margin-bottom:8px;
-    display:flex; 
-    justify-content:space-between; 
-    align-items:center;
-  }
-  .comment-text { flex:1; }
-  .comment-delete-btn {
-    background:transparent;
-    border:none;
-    color:#e74c3c;
-    font-weight:bold;
-    cursor:pointer;
-    margin-left:10px;
-  }
-  .comment-delete-btn:hover { color:#c0392b; }
-  .add-comment {
-    margin-top:10px;
-    display:flex;
-    gap:10px;
-  }
-  .add-comment input {
-    flex:1;
-    padding:6px 10px;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:1rem;
-  }
-  .votes {
-    margin-top:10px;
-    display:flex;
-    align-items:center;
-    gap:15px;
-  }
-  .vote-btn {
-    cursor:pointer;
-    font-size:1.3rem;
-    user-select:none;
-  }
-  .vote-count {
-    font-weight:bold;
-    font-size:1.1rem;
-  }
-  /* Header buttons container */
-  #header-buttons {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-  #status {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    background: #eee;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    box-shadow: 0 0 5px #aaa;
-    max-width: 300px;
-    word-wrap: break-word;
-  }
 </style>
 </head>
 <body>
 
 <header>
   <h1>HAVEN PAYLAŞIM</h1>
-  <div id="header-buttons">
-    <button id="add-server-btn">EKLE</button>
-    <button id="admin-panel-btn">YÖNETİM</button>
-  </div>
+  <button id="add-server-btn">EKLE</button>
 </header>
 
-<main id="server-list"></main>
-
-<div id="status" style="display:none;"></div>
+<main id="server-list">Yükleniyor...</main>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // Firebase config buraya (kendi Firebase projenin bilgileri ile değiştir)
   const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_AUTHDOMAIN.firebaseapp.com",
@@ -131,192 +58,70 @@
     messagingSenderId: "YOUR_SENDER_ID",
     appId: "YOUR_APP_ID"
   };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // Kullanıcıya benzersiz ID oluştur (localStorage’da sakla)
-  let userId = localStorage.getItem('userId');
-  if (!userId) {
-    userId = 'user_' + Math.random().toString(36).substr(2, 9);
-    localStorage.setItem('userId', userId);
-  }
-
   const serverListEl = document.getElementById('server-list');
-  const statusEl = document.getElementById('status');
+  const addBtn = document.getElementById('add-server-btn');
 
-  // Durum mesajı gösterme
-  function showStatus(message, timeout=4000) {
-    statusEl.textContent = message;
-    statusEl.style.display = 'block';
-    setTimeout(() => { statusEl.style.display = 'none'; }, timeout);
-  }
+  addBtn.onclick = () => {
+    window.location.href = 'ekle.html';
+  };
 
-  // Sunucu kartı oluşturma
-  function createServerCard(server) {
+  function createServerCard(doc) {
+    const data = doc.data();
+
     const card = document.createElement('div');
     card.className = 'server-card';
 
     const headerDiv = document.createElement('div');
     headerDiv.className = 'server-header';
 
-    // Sunucu adı (tıklanınca gösterilecek)
     const nameEl = document.createElement('div');
     nameEl.className = 'server-name';
-    nameEl.textContent = server.name;
-    nameEl.title = 'Sunucu adı (tıklayınca gösterilecek)';
-    nameEl.style.cursor = 'pointer';
+    nameEl.textContent = data.name;
+    headerDiv.appendChild(nameEl);
 
-    // Link butonu
     const linkBtn = document.createElement('button');
     linkBtn.className = 'server-link-btn';
     linkBtn.textContent = 'LİNK';
-    linkBtn.onclick = () => window.open(server.link, '_blank');
-
-    headerDiv.appendChild(nameEl);
+    linkBtn.onclick = () => window.open(data.link, '_blank');
     headerDiv.appendChild(linkBtn);
+
     card.appendChild(headerDiv);
 
-    // Sunucu linkini altına yazdır
     const linkText = document.createElement('div');
     linkText.style.marginTop = '6px';
     linkText.style.color = '#555';
-    linkText.textContent = server.link;
+    linkText.textContent = data.link;
     card.appendChild(linkText);
-
-    // Oy ve yorum alanı
-    const votesDiv = document.createElement('div');
-    votesDiv.className = 'votes';
-
-    // Oy sayısı göster
-    const voteCount = document.createElement('span');
-    voteCount.className = 'vote-count';
-    voteCount.textContent = server.votes || 0;
-
-    // 👍🏻 Oy verme butonu
-    const upvoteBtn = document.createElement('button');
-    upvoteBtn.className = 'vote-btn';
-    upvoteBtn.textContent = '👍🏻';
-
-    upvoteBtn.onclick = async () => {
-      try {
-        const userVoteRef = db.collection('servers').doc(server.id).collection('votes').doc(userId);
-        const userVoteDoc = await userVoteRef.get();
-
-        if (userVoteDoc.exists) {
-          alert('Zaten oy verdiniz.');
-          return;
-        }
-
-        await db.collection('servers').doc(server.id).update({
-          votes: firebase.firestore.FieldValue.increment(1)
-        });
-
-        await userVoteRef.set({ voted: true });
-
-        showStatus('Oy verildi.');
-        fetchServers();
-      } catch(e) {
-        alert('Oy verme sırasında hata oluştu: ' + e.message);
-      }
-    };
-
-    votesDiv.appendChild(upvoteBtn);
-    votesDiv.appendChild(voteCount);
-    card.appendChild(votesDiv);
-
-    // Yorumlar bölümü
-    const commentsDiv = document.createElement('div');
-    commentsDiv.className = 'comments';
-
-    async function loadComments() {
-      commentsDiv.innerHTML = '';
-      try {
-        const commentsSnapshot = await db.collection('servers').doc(server.id).collection('comments').orderBy('createdAt').get();
-
-        commentsSnapshot.forEach(commentDoc => {
-          const comment = commentDoc.data();
-          const commentEl = document.createElement('div');
-          commentEl.className = 'comment';
-
-          const commentText = document.createElement('div');
-          commentText.className = 'comment-text';
-          commentText.textContent = comment.text;
-
-          commentEl.appendChild(commentText);
-
-          // Sadece kendi yorumunu silebilirsin
-          if (comment.userId === userId) {
-            const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'comment-delete-btn';
-            deleteBtn.textContent = '✖';
-            deleteBtn.onclick = async () => {
-              try {
-                await db.collection('servers').doc(server.id).collection('comments').doc(commentDoc.id).delete();
-                showStatus('Yorum silindi.');
-                loadComments();
-              } catch(e) {
-                alert('Yorum silinirken hata oluştu: ' + e.message);
-              }
-            };
-            commentEl.appendChild(deleteBtn);
-          }
-
-          commentsDiv.appendChild(commentEl);
-        });
-      } catch(e) {
-        commentsDiv.textContent = 'Yorumlar yüklenirken hata oluştu.';
-      }
-    }
-
-    loadComments();
-
-    // Yorum ekleme alanı
-    const addCommentDiv = document.createElement('div');
-    addCommentDiv.className = 'add-comment';
-
-    const commentInput = document.createElement('input');
-    commentInput.placeholder = 'Yorumunuzu yazın...';
-    commentInput.maxLength = 200;
-
-    const commentBtn = document.createElement('button');
-    commentBtn.textContent = 'Gönder';
-
-    commentBtn.onclick = async () => {
-      const text = commentInput.value.trim();
-      if (!text) return alert('Lütfen yorum yazın.');
-
-      try {
-        // Kullanıcı daha önce yorum yaptı mı kontrol et
-        const existingComments = await db.collection('servers').doc(server.id).collection('comments')
-          .where('userId', '==', userId).get();
-
-        if (!existingComments.empty) {
-          alert('Zaten yorum yaptınız.');
-          return;
-        }
-
-        await db.collection('servers').doc(server.id).collection('comments').add({
-          text,
-          userId,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-
-        commentInput.value = '';
-        showStatus('Yorum eklendi.');
-        loadComments();
-      } catch(e) {
-        alert('Yorum eklenirken hata oluştu: ' + e.message);
-      }
-    };
-
-    addCommentDiv.appendChild(commentInput);
-    addCommentDiv.appendChild(commentBtn);
-    card.appendChild(commentsDiv);
-    card.appendChild(addCommentDiv);
 
     return card;
   }
 
-  // Sunucuları Firestore’dan çek
-  async function fetchServers()
+  async function fetchServers() {
+    serverListEl.innerHTML = 'Yükleniyor...';
+    try {
+      const snapshot = await db.collection('servers').orderBy('createdAt', 'desc').get();
+
+      if (snapshot.empty) {
+        serverListEl.textContent = 'Henüz sunucu eklenmemiş.';
+        return;
+      }
+
+      serverListEl.innerHTML = '';
+      snapshot.forEach(doc => {
+        const card = createServerCard(doc);
+        serverListEl.appendChild(card);
+      });
+
+    } catch (err) {
+      serverListEl.textContent = 'Sunucular yüklenirken hata oluştu: ' + err.message;
+    }
+  }
+
+  fetchServers();
+</script>
+
+</body>
+</html>
