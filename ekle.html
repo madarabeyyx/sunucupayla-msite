@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sunucu Ekle</title>
+<style>
+  body { font-family: Arial, sans-serif; padding: 20px; background: #f0f4f8; }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #007f3f;
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  button {
+    background: #2ecc40;
+    border: none;
+    padding: 8px 16px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+  input[type=text] {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>HAVEN PAYLAŞIM</div>
+  <button id="mainMenuBtn">ANA MENÜ</button>
+</header>
+
+<h2>Sunucu Ekle</h2>
+
+<label for="serverName">Sunucu Adı</label>
+<input type="text" id="serverName" placeholder="Sunucu adını yazınız" />
+
+<label for="serverLink">Sunucu Linki</label>
+<input type="text" id="serverLink" placeholder="https://discord.gg/..." />
+
+<button id="addServerBtn" style="margin-top: 20px;">EKLE</button>
+
+<script>
+  function getServers() {
+    return JSON.parse(localStorage.getItem('servers') || '[]');
+  }
+  function saveServers(servers) {
+    localStorage.setItem('servers', JSON.stringify(servers));
+  }
+
+  document.getElementById('addServerBtn').onclick = () => {
+    const name = document.getElementById('serverName').value.trim();
+    const link = document.getElementById('serverLink').value.trim();
+
+    if(!name || !link) {
+      alert('Sunucu adı ve linki boş bırakılamaz!');
+      return;
+    }
+    // Link https://discord veya discord ile başlamalı
+    if(!link.toLowerCase().startsWith('https://discord') && !link.toLowerCase().startsWith('discord')) {
+      alert('Link https://discord veya discord ile başlamalı!');
+      return;
+    }
+
+    const servers = getServers();
+
+    // Aynı link eklenmiş mi kontrolü (isteğe bağlı)
+    if(servers.some(s => s.link === link)) {
+      alert('Bu link zaten eklenmiş!');
+      return;
+    }
+
+    servers.push({ name, link, votes: 0, comments: [] });
+    saveServers(servers);
+
+    alert('Sunucu başarıyla eklendi!');
+    // Alanları temizle
+    document.getElementById('serverName').value = '';
+    document.getElementById('serverLink').value = '';
+  };
+
+  document.getElementById('mainMenuBtn').onclick = () => {
+    window.location.href = 'index.html';
+  };
+</script>
+</body>
+</html>
