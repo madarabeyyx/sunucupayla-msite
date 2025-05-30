@@ -1,77 +1,64 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sunucu Ekle</title>
-<style>
-  body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
-  header { background:#1d8f1d; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; }
-  header h1 { margin:0; font-size:1.5rem; }
-  button { padding:8px 16px; border:none; background:#2ecc40; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer; }
-  button:hover { background:#27ae36; }
-  form { margin-top:20px; max-width:400px; }
-  input[type=text] {
-    width: 100%; padding:8px 10px; margin-bottom:15px; border:1px solid #ccc; border-radius:6px; font-size:1rem;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <title>Sunucu Ekle</title>
 </head>
 <body>
 
-<header>
-  <h1>HAVEN PAYLAŞIM</h1>
-  <button id="main-menu-btn">ANA MENÜ</button>
-</header>
+  <h1>Sunucu Ekle</h1>
+  <form id="ekleForm">
+    <input type="text" id="serverName" placeholder="Sunucu Adı" required />
+    <input type="url" id="serverLink" placeholder="Discord Sunucu Linki" required />
+    <button type="submit">EKLE</button>
+  </form>
 
-<form id="add-server-form">
-  <input type="text" id="server-name" placeholder="Sunucu Adı" required />
-  <input type="text" id="server-link" placeholder="Sunucu Linki (https://discord.gg/...)" required />
-  <button type="submit">Ekle</button>
-</form>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-<script>
-  // Firebase config (kendi bilgilerinle değiştir)
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTHDOMAIN.firebaseapp.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_BUCKET.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  <script>
+    // Buraya kendi Firebase konfigürasyonunu yaz
+    const firebaseConfig = {
+      apiKey: "SENİN_API_KEY",
+      authDomain: "projen.firebaseapp.com",
+      projectId: "projen-id",
+      storageBucket: "projen.appspot.com",
+      messagingSenderId: "xxx",
+      appId: "xxx"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-  document.getElementById('main-menu-btn').onclick = () => {
-    window.location.href = 'index.html';
-  };
+    const form = document.getElementById('ekleForm');
 
-  document.getElementById('add-server-form').onsubmit = async e => {
-    e.preventDefault();
-    const name = document.getElementById('server-name').value.trim();
-    const link = document.getElementById('server-link').value.trim();
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
 
-    if (!name || !link) return alert('Lütfen sunucu adı ve linkini girin!');
-    if (!link.startsWith('https://discord.gg/') && !link.startsWith('discord.gg/')) {
-      return alert('Geçerli bir Discord linki girin!');
-    }
+      const name = document.getElementById('serverName').value.trim();
+      const link = document.getElementById('serverLink').value.trim();
 
-    try {
-      await db.collection('servers').add({
-        name,
-        link,
-        votes: 0,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      alert('Sunucu başarıyla eklendi!');
-      document.getElementById('add-server-form').reset();
-    } catch (err) {
-      alert('Hata oluştu: ' + err.message);
-    }
-  };
-</script>
+      if (!name || !link) {
+        alert('Lütfen tüm alanları doldurun!');
+        return;
+      }
+      if (!link.startsWith('https://discord') && !link.startsWith('discord')) {
+        alert('Lütfen geçerli bir Discord linki girin!');
+        return;
+      }
+
+      try {
+        await db.collection('servers').add({
+          name,
+          link,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        alert('Sunucu başarıyla eklendi!');
+        form.reset();
+      } catch (err) {
+        alert('Hata oluştu: ' + err.message);
+      }
+    });
+  </script>
 
 </body>
 </html>
