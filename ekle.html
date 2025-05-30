@@ -5,98 +5,73 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Sunucu Ekle</title>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; background: #f0f4f8; }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #007f3f;
-    color: white;
-    padding: 10px 20px;
-    font-weight: bold;
-    font-size: 22px;
-    margin-bottom: 20px;
-  }
-  button {
-    background: #2ecc40;
-    border: none;
-    padding: 8px 16px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  label {
-    display: block;
-    margin-top: 15px;
-    margin-bottom: 5px;
-  }
+  body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px; }
+  header { background:#1d8f1d; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:1.5rem; }
+  button { padding:8px 16px; border:none; background:#2ecc40; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer; }
+  button:hover { background:#27ae36; }
+  form { margin-top:20px; max-width:400px; }
   input[type=text] {
-    width: 100%;
-    padding: 8px;
-    font-size: 16px;
+    width: 100%; padding:8px 10px; margin-bottom:15px; border:1px solid #ccc; border-radius:6px; font-size:1rem;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div>HAVEN PAYLAŞIM</div>
-  <button id="mainMenuBtn">ANA MENÜ</button>
+  <h1>HAVEN PAYLAŞIM</h1>
+  <button id="main-menu-btn">ANA MENÜ</button>
 </header>
 
-<h2>Sunucu Ekle</h2>
+<form id="add-server-form">
+  <input type="text" id="server-name" placeholder="Sunucu Adı" required />
+  <input type="text" id="server-link" placeholder="Sunucu Linki (https://discord.gg/...)" required />
+  <button type="submit">Ekle</button>
+</form>
 
-<label for="serverName">Sunucu Adı</label>
-<input type="text" id="serverName" placeholder="Sunucu adını yazınız" />
-
-<label for="serverLink">Sunucu Linki</label>
-<input type="text" id="serverLink" placeholder="https://discord.gg/..." />
-
-<button id="addServerBtn" style="margin-top: 20px;">EKLE</button>
-
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 <script>
-  function getServers() {
-    return JSON.parse(localStorage.getItem('servers') || '[]');
-  }
-  function saveServers(servers) {
-    localStorage.setItem('servers', JSON.stringify(servers));
-  }
-
-  document.getElementById('addServerBtn').onclick = () => {
-    const name = document.getElementById('serverName').value.trim();
-    const link = document.getElementById('serverLink').value.trim();
-
-    if(!name || !link) {
-      alert('Sunucu adı ve linki boş bırakılamaz!');
-      return;
-    }
-    // Link https://discord veya discord ile başlamalı
-    if(!link.toLowerCase().startsWith('https://discord') && !link.toLowerCase().startsWith('discord')) {
-      alert('Link https://discord veya discord ile başlamalı!');
-      return;
-    }
-
-    const servers = getServers();
-
-    // Aynı link eklenmiş mi kontrolü (isteğe bağlı)
-    if(servers.some(s => s.link === link)) {
-      alert('Bu link zaten eklenmiş!');
-      return;
-    }
-
-    servers.push({ name, link, votes: 0, comments: [] });
-    saveServers(servers);
-
-    alert('Sunucu başarıyla eklendi!');
-    // Alanları temizle
-    document.getElementById('serverName').value = '';
-    document.getElementById('serverLink').value = '';
+  // Firebase config (kendi bilgilerinle değiştir)
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTHDOMAIN.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_BUCKET.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-  document.getElementById('mainMenuBtn').onclick = () => {
+  document.getElementById('main-menu-btn').onclick = () => {
     window.location.href = 'index.html';
   };
+
+  document.getElementById('add-server-form').onsubmit = async e => {
+    e.preventDefault();
+    const name = document.getElementById('server-name').value.trim();
+    const link = document.getElementById('server-link').value.trim();
+
+    if (!name || !link) return alert('Lütfen sunucu adı ve linkini girin!');
+    if (!link.startsWith('https://discord.gg/') && !link.startsWith('discord.gg/')) {
+      return alert('Geçerli bir Discord linki girin!');
+    }
+
+    try {
+      await db.collection('servers').add({
+        name,
+        link,
+        votes: 0,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      alert('Sunucu başarıyla eklendi!');
+      document.getElementById('add-server-form').reset();
+    } catch (err) {
+      alert('Hata oluştu: ' + err.message);
+    }
+  };
 </script>
+
 </body>
 </html>
