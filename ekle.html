@@ -1,36 +1,29 @@
-<!DOCTYPE html><html lang="tr">
+<!DOCTYPE html>
+<html lang="tr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Sunucu Ekle</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       max-width: 600px;
-      margin: 20px auto;
+      margin: 30px auto;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
     }
-    h2 {
-      margin: 0;
-    }
-    .button-link {
+    .btn {
       background: #4CAF50;
       color: white;
-      padding: 8px 16px;
-      text-decoration: none;
+      padding: 10px 16px;
       border-radius: 6px;
       font-weight: bold;
-    }
-    .button-link:hover {
-      background: #45a049;
+      text-decoration: none;
     }
     input, button {
-      display: block;
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -42,21 +35,23 @@
       border: none;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #45a049;
-    }
   </style>
 </head>
-<body>  <header>
+<body>
+  <header>
     <h2>Sunucu Ekle</h2>
-    <a href="index.html" class="button-link">ANA MENÜ</a>
-  </header>  <input type="text" id="serverName" placeholder="Sunucu Adı" required>
-  <input type="text" id="serverLink" placeholder="Sunucu Linki (https://discord.gg/...)" required>
-  <button onclick="submitServer()">Ekle</button>  <script>
-    const SUPABASE_URL = 'https://iweymvclgbtmnaglvgzp.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8';
+    <a href="index.html" class="btn">ANA MENÜ</a>
+  </header>
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  <input type="text" id="serverName" placeholder="Sunucu Adı" />
+  <input type="text" id="serverLink" placeholder="Sunucu Linki (https://discord.gg/...)" />
+  <button onclick="submitServer()">Ekle</button>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://iweymvclgbtmnaglvgzp.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8'
+    );
 
     async function submitServer() {
       const name = document.getElementById('serverName').value.trim();
@@ -82,5 +77,6 @@
         window.location.href = 'index.html';
       }
     }
-  </script></body>
+  </script>
+</body>
 </html>
