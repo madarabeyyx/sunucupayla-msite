@@ -3,6 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <title>Sunucu Ekle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 50px auto;
+      padding: 10px;
+    }
+    input, button {
+      width: 100%;
+      margin: 10px 0;
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+    h1 {
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
 
@@ -17,7 +47,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
   <script>
-    // Buraya kendi Firebase konfigürasyonunu yaz
+    // Firebase config - kendi ayarlarını buraya koy
     const firebaseConfig = {
       apiKey: "SENİN_API_KEY",
       authDomain: "projen.firebaseapp.com",
@@ -54,6 +84,7 @@
         });
         alert('Sunucu başarıyla eklendi!');
         form.reset();
+        window.location.href = 'index.html'; // Ana sayfaya yönlendir
       } catch (err) {
         alert('Hata oluştu: ' + err.message);
       }
