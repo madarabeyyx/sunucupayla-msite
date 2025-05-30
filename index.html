@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HAVEN PAYLAŞIM</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0; background: #f0f4f8;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #007f3f;
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 22px;
+  }
+  header button {
+    background: #2ecc40;
+    border: none;
+    padding: 8px 16px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  #container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 0 10px;
+  }
+  .server-card {
+    background: white;
+    border-radius: 25px;
+    border: 3px solid #3399ff;
+    padding: 15px 25px 20px 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+  }
+  .server-name {
+    font-weight: bold;
+    font-size: 20px;
+    margin-bottom: 6px;
+    user-select: none;
+  }
+  .server-link {
+    display: inline-block;
+    font-weight: bold;
+    font-size: 16px;
+    color: #3182ce;
+    text-decoration: underline;
+    margin-bottom: 10px;
+    cursor: pointer;
+  }
+  .votes {
+    margin-bottom: 10px;
+  }
+  .vote-btn, .comment-btn {
+    background: #2ecc40;
+    border: none;
+    padding: 6px 14px;
+    color: white;
+    font-weight: bold;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .comments {
+    margin-top: 10px;
+  }
+  .comments h4 {
+    margin: 10px 0 6px 0;
+  }
+  .comment-input {
+    width: calc(100% - 100px);
+    padding: 6px 10px;
+    font-size: 14px;
+  }
+  .comment-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .comment-text {
+    background: #e6f2ff;
+    padding: 6px 10px;
+    border-radius: 12px;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .comment-text button {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    color: #cc0000;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>HAVEN PAYLAŞIM</div>
+  <div>
+    <button id="addBtn">EKLE</button>
+    <button id="adminBtn" style="margin-left:10px; background:#555;">Yönetim</button>
+  </div>
+</header>
+
+<div id="container"></div>
+
+<script>
+  // Helper to get and save servers to localStorage
+  function getServers() {
+    return JSON.parse(localStorage.getItem('servers') || '[]');
+  }
+  function saveServers(servers) {
+    localStorage.setItem('servers', JSON.stringify(servers));
+  }
+
+  // Helper to get user votes/comments per server from localStorage
+  function getUserData() {
+    return JSON.parse(localStorage.getItem('userData') || '{}');
+  }
+  function saveUserData(data) {
+    localStorage.setItem('userData', JSON.stringify(data));
+  }
+
+  // Render all servers with votes, comments etc.
+  function renderServers() {
+    const container = document.getElementById('container');
+    container.innerHTML = '';
+
+    const servers = getServers();
+    const userData = getUserData();
+
+    if(servers.length === 0) {
+      container.innerHTML = '<p style="text-align:center; color:#666;">Henüz sunucu eklenmemiş.</p>';
+      return;
+    }
+
+    servers.forEach((srv, idx) => {
+      const card = document.createElement('div');
+      card.className = 'server-card';
+
+      card.innerHTML = `
+        <div class="server-name">${srv.name}</div>
+        <a href="${srv.link}" target="_blank" rel="noopener noreferrer" class="server-link">${srv.link}</a>
+        <div class="votes">Beğeni: <span id="voteCount${idx}">${srv.votes || 0}</span></div>
+        <button class="vote-btn" id="voteBtn${idx}">${userData[srv.link]?.voted ? 'Oyumu Kaldır' : 'Oy Ver'}</button>
+
+        <div class="comments" id="comments${idx}">
+          <h4>Yorumlar:</h4>
+          <div id="commentsList${idx}"></div>
+          <div class="comment-row">
+            <input type="text" id="commentInput${idx}" class="comment-input" placeholder="Yorumunuzu yazın..." maxlength="200" ${userData[srv.link]?.comment ? 'disabled' : ''} />
+            <button class="comment-btn" id="commentBtn${idx}" ${userData[srv.link]?.comment ? 'disabled' : ''}>Yorum Ekle</button>
+          </div>
+        </div>
+      `;
+
+      container.appendChild(card);
+
+      // Render comments for this server
+      const commentsList = document.getElementById(`commentsList${idx}`);
+      const comments = srv.comments || [];
+      comments.forEach((cmt, cidx) => {
+        const cdiv = document.createElement('div');
+        cdiv.className = 'comment-text';
+        cdiv.textContent = cmt.text;
+
+        // Sadece kendi yorumunu silsin
+        if(userData[srv.link]?.comment && userData[srv.link].commentId === cidx) {
+          const delBtn = document.createElement('button');
+          delBtn.textContent = '×';
+          delBtn.title = 'Yorumu sil';
+          delBtn.onclick = () => {
+            // Sil ve kaydet
+            comments.splice(cidx, 1);
+            srv.comments = comments;
+            saveServers(servers);
+
+            delete userData[srv.link].comment;
+            delete userData[srv.link].commentId;
+            saveUserData(userData);
+
+            renderServers();
+          };
+          cdiv.appendChild(delBtn);
+        }
+        commentsList.appendChild(cdiv);
+      });
+
+      // Oy verme butonu
+      const voteBtn = document.getElementById(`voteBtn${idx}`);
+      voteBtn.onclick = () => {
+        if(userData[srv.link]?.voted) {
+          // Oy kaldır
+          srv.votes = (srv.votes || 1) - 1;
+          delete userData[srv.link].voted;
+        } else {
+          srv.votes = (srv.votes || 0) + 1;
+          userData[srv.link] = userData[srv.link] || {};
+          userData[srv.link].voted = true;
+        }
+        saveServers(servers);
+        saveUserData(userData);
+        renderServers();
+      };
+
+      // Yorum ekleme
+      const commentInput = document.getElementById(`commentInput${idx}`);
+      const commentBtn = document.getElementById(`commentBtn${idx}`);
+      commentBtn.onclick = () => {
+        const text = commentInput.value.trim();
+        if(text.length === 0) {
+          alert('Yorum boş olamaz!');
+          return;
+        }
+        if(userData[srv.link]?.comment) {
+          alert('Sadece bir yorum ekleyebilirsiniz.');
+          return;
+        }
+        srv.comments = srv.comments || [];
+        srv.comments.push({ text });
+        saveServers(servers);
+
+        userData[srv.link] = userData[srv.link] || {};
+        userData[srv.link].comment = text;
+        userData[srv.link].commentId = srv.comments.length - 1;
+        saveUserData(userData);
+
+        renderServers();
+      };
+    });
+  }
+
+  // Ana sayfa açıldığında renderla
+  renderServers();
+
+  // EKLE butonuna basınca ekle.html e git
+  document.getElementById('addBtn').onclick = () => {
+    window.location.href = 'ekle.html';
+  };
+  // Yönetim butonuna basınca yönetim.html e git
+  document.getElementById('adminBtn').onclick = () => {
+    window.location.href = 'yonetim.html';
+  };
+</script>
+</body>
+</html>

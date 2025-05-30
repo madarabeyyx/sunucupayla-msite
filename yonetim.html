@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Yönetim Paneli - HAVEN PAYLAŞIM</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f9fafb;
+    margin: 0; padding: 0;
+  }
+  header {
+    background: #007f3f;
+    color: white;
+    padding: 15px 20px;
+    font-size: 22px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  #logoutBtn {
+    background: #ff4d4d;
+    border: none;
+    padding: 6px 12px;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  #loginSection, #adminSection {
+    max-width: 900px;
+    margin: 30px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgb(0 0 0 / 0.1);
+  }
+  input[type=password], input[type=number] {
+    padding: 8px;
+    font-size: 16px;
+    width: 250px;
+    margin-right: 10px;
+  }
+  button {
+    background: #007f3f;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    vertical-align: top;
+  }
+  th {
+    background: #3399ff;
+    color: white;
+  }
+  .small-btn {
+    background: #2ecc40;
+    padding: 4px 8px;
+    font-size: 13px;
+    margin: 2px;
+  }
+  .danger-btn {
+    background: #ff4d4d;
+  }
+  .ban-list {
+    margin-top: 20px;
+    background: #ffe6e6;
+    padding: 15px;
+    border-radius: 8px;
+  }
+  .ban-list h3 {
+    margin-top: 0;
+  }
+  .ban-item {
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .ban-item button {
+    background: #ff6666;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>Yönetim Paneli - HAVEN PAYLAŞIM</div>
+  <button id="logoutBtn" style="display:none;">Çıkış Yap</button>
+</header>
+
+<div id="loginSection">
+  <h2>Yönetim Girişi</h2>
+  <input type="password" id="adminPass" placeholder="Şifreyi giriniz" />
+  <button id="loginBtn">Giriş</button>
+  <p id="loginMsg" style="color:red; margin-top:10px;"></p>
+</div>
+
+<div id="adminSection" style="display:none;">
+  <h2>Sunucu Yönetimi</h2>
+  <button id="deleteAllBtn" class="danger-btn" style="margin-bottom:15px;">Tüm Linkleri Sil</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Sunucu Adı</th>
+        <th>Link</th>
+        <th>Beğeni</th>
+        <th>Beğeni Düzenle</th>
+        <th>Yorumlar</th>
+        <th>İşlemler</th>
+      </tr>
+    </thead>
+    <tbody id="serverTableBody">
+    </tbody>
+  </table>
+
+  <div class="ban-list">
+    <h3>Banlanan Linkler</h3>
+    <div id="banList"></div>
+  </div>
+</div>
+
+<script>
+  const adminPassword = 'zyroxx01ali'; // Yönetim şifren burada
+  const loginSection = document.getElementById('loginSection');
+  const adminSection = document.getElementById('adminSection');
+  const loginBtn = document.getElementById('loginBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const loginMsg = document.getElementById('loginMsg');
+  const serverTableBody = document.getElementById('serverTableBody');
+  const deleteAllBtn = document.getElementById('deleteAllBtn');
+  const banListDiv = document.getElementById('banList');
+
+  // LocalStorage key'leri
+  const serversKey = 'servers';
+  const banKey = 'banLinks';
+
+  function getServers() {
+    return JSON.parse(localStorage.getItem(serversKey) || '[]');
+  }
+  function saveServers(servers) {
+    localStorage.setItem(serversKey, JSON.stringify(servers));
+  }
+  function getBanList() {
+    return JSON.parse(localStorage.getItem(banKey) || '[]');
+  }
+  function saveBanList(list) {
+    localStorage.setItem(banKey, JSON.stringify(list));
+  }
+
+  function renderBanList() {
+    const bans = getBanList();
+    banListDiv.innerHTML = '';
+    if (bans.length === 0) {
+      banListDiv.textContent = 'Banlanan link yok.';
+      return;
+    }
+    bans.forEach((link, i) => {
+      const div = document.createElement('div');
+      div.className = 'ban-item';
+      div.textContent = link;
+      const btn = document.createElement('button');
+      btn.textContent = 'Ban Kaldır';
+      btn.onclick = () => {
+        bans.splice(i, 1);
+        saveBanList(bans);
+        renderBanList();
+      };
+      div.appendChild(btn);
+      banListDiv.appendChild(div);
+    });
+  }
+
+  function renderServers() {
+    const servers = getServers();
+    const bans = getBanList();
+
+    // Banlananları filtrele (görünmesin)
+    const filtered = servers.filter(srv => !bans.includes(srv.link));
+
+    serverTableBody.innerHTML = '';
+
+    if (filtered.length === 0) {
+      serverTableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Gösterilecek sunucu yok.</td></tr>';
+      return;
+    }
+
+    filtered.forEach((srv, idx) => {
+      const tr = document.createElement('tr');
+
+      // Sunucu Adı
+      const nameTd = document.createElement('td');
+      nameTd.textContent = srv.name;
+      tr.appendChild(nameTd);
+
+      // Link
+      const linkTd = document.createElement('td');
+      const a = document.createElement('a');
+      a.href = srv.link.startsWith('http') ? srv.link : 'https://' + srv.link;
+      a.target = '_blank';
+      a.textContent = srv.link;
+      linkTd.appendChild(a);
+      tr.appendChild(linkTd);
+
+      // Beğeni sayısı
+      const votesTd = document.createElement('td');
+      votesTd.textContent = srv.votes || 0;
+      tr.appendChild(votesTd);
+
+      // Beğeni düzenleme
+      const votesEditTd = document.createElement('td');
+      const voteInput = document.createElement('input');
+      voteInput.type = 'number';
+      voteInput.value = srv.votes || 0;
+      voteInput.style.width = '70px';
+      voteInput.min = 0;
+      votesEditTd.appendChild(voteInput);
+
+      const voteSetBtn = document.createElement('button');
+      voteSetBtn.textContent = 'Ayarla';
+      voteSetBtn.className = 'small-btn';
+      voteSetBtn.onclick = () => {
+        const val = parseInt(voteInput.value);
+        if (isNaN(val) || val < 0) {
+          alert('Geçerli bir sayı giriniz!');
+          return;
+        }
+        srv.votes = val;
+        saveServers(servers);
+        renderServers();
+      };
+      votesEditTd.appendChild(voteSetBtn);
+      tr.appendChild(votesEditTd);
+
+      // Yorumlar
+      const commentsTd = document.createElement('td');
+      if (srv.comments && srv.comments.length > 0) {
+        srv.comments.forEach((cmt, cidx) => {
+          const cdiv = document.createElement('div');
+          cdiv.style.marginBottom = '8px';
+          cdiv.textContent = cmt.text;
+
+          // Yorum sil butonu
+          const delCmtBtn = document.createElement('button');
+          delCmtBtn.textContent = 'Sil';
+          delCmtBtn.className = 'small-btn danger-btn';
+          delCmtBtn.style.marginLeft = '8px';
+          delCmtBtn.onclick = () => {
+            if (confirm('Bu yorumu silmek istediğinize emin misiniz?')) {
+              srv.comments.splice(cidx, 1);
+              saveServers(servers);
+              renderServers();
+            }
+          };
+          cdiv.appendChild(delCmtBtn);
+          commentsTd.appendChild(cdiv);
+        });
+      } else {
+        commentsTd.textContent = 'Yorum yok';
+      }
+      tr.appendChild(commentsTd);
+
+      // İşlemler (link sil, banla)
+      const actionsTd = document.createElement('td');
+
+      const delLinkBtn = document.createElement('button');
+      delLinkBtn.textContent = 'Linki Sil';
+      delLinkBtn.className = 'small-btn danger-btn';
+      delLinkBtn.onclick = () => {
+        if (confirm('Bu linki tamamen silmek istediğinize emin misiniz?')) {
+          servers.splice(idx, 1);
+          saveServers(servers);
+          renderServers();
+        }
+      };
+      actionsTd.appendChild(delLinkBtn);
+
+      const banBtn = document.createElement('button');
+      banBtn.textContent = 'Site Banı';
+      banBtn.className = 'small-btn danger-btn';
+      banBtn.style.marginLeft = '6px';
+      banBtn.onclick = () => {
+        if (confirm('Bu linki site banına almak istediğinize emin misiniz? (Link artık görünmeyecek)')) {
+          const bans = getBanList();
+          if (!bans.includes(srv.link)) {
+            bans.push(srv.link);
+            saveBanList(bans);
+          }
+          renderServers();
+          renderBanList();
+        }
+      };
+      actionsTd.appendChild(banBtn);
+
+      tr.appendChild(actionsTd);
+
+      serverTableBody.appendChild(tr);
+    });
+  }
+
+  deleteAllBtn.onclick = () => {
+    if (confirm('Tüm linkleri ve verileri silmek istediğinize emin misiniz?')) {
+      localStorage.removeItem(serversKey);
+      localStorage.removeItem(banKey);
+      renderServers();
+      renderBanList();
+    }
+  };
+
+  loginBtn.onclick = () => {
+    const pass = document.getElementById('adminPass').value;
+    if (pass === adminPassword) {
+      loginSection.style.display = 'none';
+      adminSection.style.display = 'block';
+      logoutBtn.style.display = 'inline-block';
+      loginMsg.textContent = '';
+      renderServers();
+      renderBanList();
+    } else {
+      loginMsg.textContent = 'Şifre yanlış!';
+    }
+  };
+
+  logoutBtn.onclick = () => {
+    loginSection.style.display = 'block';
+    adminSection.style.display = 'none';
+    logoutBtn.style.display = 'none';
+    document.getElementById('adminPass').value = '';
+  };
+</script>
+
+</body>
+</html>
