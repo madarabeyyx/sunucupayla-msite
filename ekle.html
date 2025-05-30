@@ -1,72 +1,86 @@
-<!DOCTYPE html>
-<html lang="tr">
+<!DOCTYPE html><html lang="tr">
 <head>
-<meta charset="UTF-8" />
-<title>Sunucu Ekle - HAVEN PAYLAŞIM</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<style>
-  body { font-family: Arial, sans-serif; max-width: 700px; margin: 20px auto; }
-  header { display: flex; justify-content: space-between; align-items: center; }
-  button { background: #4CAF50; color: white; border: none; padding: 8px 16px; cursor: pointer; border-radius: 6px; }
-  button:hover { background: #45a049; }
-  input { width: 100%; padding: 8px; margin: 10px 0 20px 0; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc; }
-</style>
+  <meta charset="UTF-8">
+  <title>Sunucu Ekle</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    h2 {
+      margin: 0;
+    }
+    .button-link {
+      background: #4CAF50;
+      color: white;
+      padding: 8px 16px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .button-link:hover {
+      background: #45a049;
+    }
+    input, button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
-<body>
+<body>  <header>
+    <h2>Sunucu Ekle</h2>
+    <a href="index.html" class="button-link">ANA MENÜ</a>
+  </header>  <input type="text" id="serverName" placeholder="Sunucu Adı" required>
+  <input type="text" id="serverLink" placeholder="Sunucu Linki (https://discord.gg/...)" required>
+  <button onclick="submitServer()">Ekle</button>  <script>
+    const SUPABASE_URL = 'https://iweymvclgbtmnaglvgzp.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8';
 
-<header>
-  <div><h2>Sunucu Ekle</h2></div>
-  <button id="btnBack">ANA MENÜ</button>
-</header>
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-<input type="text" id="inputName" placeholder="Sunucu Adı" />
-<input type="text" id="inputLink" placeholder="Discord Sunucu Linki (https://discord...)" />
-<button id="btnSubmit">EKLE</button>
+    async function submitServer() {
+      const name = document.getElementById('serverName').value.trim();
+      const link = document.getElementById('serverLink').value.trim();
 
-<script>
-  const SUPABASE_URL = 'https://iweymvclgbtmnaglvgzp.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8';
+      if (!name || !link) {
+        alert('Lütfen tüm alanları doldurun.');
+        return;
+      }
 
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      if (!link.startsWith('https://discord.gg') && !link.startsWith('discord.gg')) {
+        alert('Link geçerli değil. https://discord.gg/ ile başlamalı.');
+        return;
+      }
 
-  const btnBack = document.getElementById('btnBack');
-  const btnSubmit = document.getElementById('btnSubmit');
-  const inputName = document.getElementById('inputName');
-  const inputLink = document.getElementById('inputLink');
+      const { error } = await supabase.from('servers').insert([{ name, link }]);
 
-  btnBack.addEventListener('click', () => {
-    window.location.href = 'index.html';
-  });
-
-  btnSubmit.addEventListener('click', async () => {
-    const name = inputName.value.trim();
-    const link = inputLink.value.trim();
-
-    if (!name || !link) {
-      alert('Lütfen tüm alanları doldurun!');
-      return;
+      if (error) {
+        console.error(error);
+        alert('Sunucu eklenirken hata oluştu.');
+      } else {
+        alert('Sunucu başarıyla eklendi!');
+        window.location.href = 'index.html';
+      }
     }
-
-    // Link discord ile başlıyor mu kontrol et
-    if (!link.startsWith('https://discord')) {
-      alert('Link https://discord ile başlamalı!');
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('servers')
-      .insert([{ name, link, created_at: new Date().toISOString() }]);
-
-    if (error) {
-      alert('Sunucu eklenirken hata oluştu.');
-      console.error(error);
-      return;
-    }
-
-    alert('Sunucu başarıyla eklendi!');
-    window.location.href = 'index.html';
-  });
-</script>
-
-</body>
+  </script></body>
 </html>
