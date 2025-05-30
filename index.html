@@ -3,257 +3,329 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>HAVEN PAYLAŞIM</title>
+<title>Haven Paylaşım</title>
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 0; background: #f0f4f8;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #007f3f;
-    color: white;
-    padding: 10px 20px;
-    font-weight: bold;
-    font-size: 22px;
-  }
-  header button {
-    background: #2ecc40;
-    border: none;
-    padding: 8px 16px;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  #container {
-    max-width: 900px;
-    margin: 20px auto;
-    padding: 0 10px;
-  }
+  body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:0; }
+  header { background:#1d8f1d; color:#fff; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:1.5rem; }
+  button { padding:8px 16px; border:none; background:#2ecc40; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer; }
+  button:hover { background:#27ae36; }
+  #server-list { max-width:900px; margin:20px auto; }
   .server-card {
-    background: white;
-    border-radius: 25px;
-    border: 3px solid #3399ff;
-    padding: 15px 25px 20px 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgb(0 0 0 / 0.1);
+    background:#fff; 
+    border-radius:30px; 
+    border: 3px solid #3b82f6; 
+    padding:15px 20px; 
+    margin-bottom:15px;
+    box-shadow: 0 2px 5px rgb(0 0 0 / 0.1);
   }
+  .server-header { display:flex; justify-content:space-between; align-items:center; }
   .server-name {
-    font-weight: bold;
-    font-size: 20px;
-    margin-bottom: 6px;
-    user-select: none;
+    font-size:1.2rem; 
+    font-weight:bold; 
+    cursor: default;
   }
-  .server-link {
-    display: inline-block;
-    font-weight: bold;
-    font-size: 16px;
-    color: #3182ce;
-    text-decoration: underline;
-    margin-bottom: 10px;
-    cursor: pointer;
+  .server-link-btn {
+    background:#3b82f6;
+    color:#fff;
+    padding:6px 12px;
+    border-radius:6px;
+    border:none;
+    cursor:pointer;
+    font-weight:bold;
+  }
+  .server-link-btn:hover { background:#2563eb; }
+  .comments {
+    margin-top:10px;
+  }
+  .comment {
+    background:#f9f9f9; 
+    border-radius:12px; 
+    padding:6px 12px; 
+    margin-bottom:8px;
+    display:flex; 
+    justify-content:space-between; 
+    align-items:center;
+  }
+  .comment-text { flex:1; }
+  .comment-delete-btn {
+    background:transparent;
+    border:none;
+    color:#e74c3c;
+    font-weight:bold;
+    cursor:pointer;
+    margin-left:10px;
+  }
+  .comment-delete-btn:hover { color:#c0392b; }
+  .add-comment {
+    margin-top:10px;
+    display:flex;
+    gap:10px;
+  }
+  .add-comment input {
+    flex:1;
+    padding:6px 10px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:1rem;
   }
   .votes {
-    margin-bottom: 10px;
+    margin-top:10px;
+    display:flex;
+    align-items:center;
+    gap:15px;
   }
-  .vote-btn, .comment-btn {
-    background: #2ecc40;
-    border: none;
-    padding: 6px 14px;
-    color: white;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-top: 4px;
+  .vote-btn {
+    cursor:pointer;
+    font-size:1.3rem;
+    user-select:none;
   }
-  .comments {
-    margin-top: 10px;
+  .vote-count {
+    font-weight:bold;
+    font-size:1.1rem;
   }
-  .comments h4 {
-    margin: 10px 0 6px 0;
-  }
-  .comment-input {
-    width: calc(100% - 100px);
-    padding: 6px 10px;
-    font-size: 14px;
-  }
-  .comment-row {
+  /* Header buttons container */
+  #header-buttons {
     display: flex;
     gap: 10px;
-    margin-top: 6px;
-  }
-  .comment-text {
-    background: #e6f2ff;
-    padding: 6px 10px;
-    border-radius: 12px;
-    margin-bottom: 6px;
-    position: relative;
-  }
-  .comment-text button {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    color: #cc0000;
-    font-size: 16px;
+    align-items: center;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div>HAVEN PAYLAŞIM</div>
-  <div>
-    <button id="addBtn">EKLE</button>
-    <button id="adminBtn" style="margin-left:10px; background:#555;">Yönetim</button>
+  <h1>HAVEN PAYLAŞIM</h1>
+  <div id="header-buttons">
+    <button id="add-server-btn">EKLE</button>
+    <button id="admin-panel-btn">YÖNETİM</button>
   </div>
 </header>
 
-<div id="container"></div>
+<main id="server-list"></main>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
 <script>
-  // Helper to get and save servers to localStorage
-  function getServers() {
-    return JSON.parse(localStorage.getItem('servers') || '[]');
+  // Firebase config: kendi projenle değiştir!!!
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTHDOMAIN.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_BUCKET.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // Kullanıcıya benzersiz ID oluştur
+  let userId = localStorage.getItem('userId');
+  if (!userId) {
+    userId = 'user_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('userId', userId);
   }
-  function saveServers(servers) {
-    localStorage.setItem('servers', JSON.stringify(servers));
-  }
 
-  // Helper to get user votes/comments per server from localStorage
-  function getUserData() {
-    return JSON.parse(localStorage.getItem('userData') || '{}');
-  }
-  function saveUserData(data) {
-    localStorage.setItem('userData', JSON.stringify(data));
-  }
+  // Sunucu listesi elementi
+  const serverListEl = document.getElementById('server-list');
 
-  // Render all servers with votes, comments etc.
-  function renderServers() {
-    const container = document.getElementById('container');
-    container.innerHTML = '';
-
-    const servers = getServers();
-    const userData = getUserData();
-
-    if(servers.length === 0) {
-      container.innerHTML = '<p style="text-align:center; color:#666;">Henüz sunucu eklenmemiş.</p>';
-      return;
-    }
-
-    servers.forEach((srv, idx) => {
-      const card = document.createElement('div');
-      card.className = 'server-card';
-
-      card.innerHTML = `
-        <div class="server-name">${srv.name}</div>
-        <a href="${srv.link}" target="_blank" rel="noopener noreferrer" class="server-link">${srv.link}</a>
-        <div class="votes">Beğeni: <span id="voteCount${idx}">${srv.votes || 0}</span></div>
-        <button class="vote-btn" id="voteBtn${idx}">${userData[srv.link]?.voted ? 'Oyumu Kaldır' : 'Oy Ver'}</button>
-
-        <div class="comments" id="comments${idx}">
-          <h4>Yorumlar:</h4>
-          <div id="commentsList${idx}"></div>
-          <div class="comment-row">
-            <input type="text" id="commentInput${idx}" class="comment-input" placeholder="Yorumunuzu yazın..." maxlength="200" ${userData[srv.link]?.comment ? 'disabled' : ''} />
-            <button class="comment-btn" id="commentBtn${idx}" ${userData[srv.link]?.comment ? 'disabled' : ''}>Yorum Ekle</button>
-          </div>
-        </div>
-      `;
-
-      container.appendChild(card);
-
-      // Render comments for this server
-      const commentsList = document.getElementById(`commentsList${idx}`);
-      const comments = srv.comments || [];
-      comments.forEach((cmt, cidx) => {
-        const cdiv = document.createElement('div');
-        cdiv.className = 'comment-text';
-        cdiv.textContent = cmt.text;
-
-        // Sadece kendi yorumunu silsin
-        if(userData[srv.link]?.comment && userData[srv.link].commentId === cidx) {
-          const delBtn = document.createElement('button');
-          delBtn.textContent = '×';
-          delBtn.title = 'Yorumu sil';
-          delBtn.onclick = () => {
-            // Sil ve kaydet
-            comments.splice(cidx, 1);
-            srv.comments = comments;
-            saveServers(servers);
-
-            delete userData[srv.link].comment;
-            delete userData[srv.link].commentId;
-            saveUserData(userData);
-
-            renderServers();
-          };
-          cdiv.appendChild(delBtn);
-        }
-        commentsList.appendChild(cdiv);
-      });
-
-      // Oy verme butonu
-      const voteBtn = document.getElementById(`voteBtn${idx}`);
-      voteBtn.onclick = () => {
-        if(userData[srv.link]?.voted) {
-          // Oy kaldır
-          srv.votes = (srv.votes || 1) - 1;
-          delete userData[srv.link].voted;
-        } else {
-          srv.votes = (srv.votes || 0) + 1;
-          userData[srv.link] = userData[srv.link] || {};
-          userData[srv.link].voted = true;
-        }
-        saveServers(servers);
-        saveUserData(userData);
-        renderServers();
-      };
-
-      // Yorum ekleme
-      const commentInput = document.getElementById(`commentInput${idx}`);
-      const commentBtn = document.getElementById(`commentBtn${idx}`);
-      commentBtn.onclick = () => {
-        const text = commentInput.value.trim();
-        if(text.length === 0) {
-          alert('Yorum boş olamaz!');
-          return;
-        }
-        if(userData[srv.link]?.comment) {
-          alert('Sadece bir yorum ekleyebilirsiniz.');
-          return;
-        }
-        srv.comments = srv.comments || [];
-        srv.comments.push({ text });
-        saveServers(servers);
-
-        userData[srv.link] = userData[srv.link] || {};
-        userData[srv.link].comment = text;
-        userData[srv.link].commentId = srv.comments.length - 1;
-        saveUserData(userData);
-
-        renderServers();
-      };
+  // Sayfa yüklendiğinde sunucuları çek
+  async function fetchServers() {
+    const snapshot = await db.collection('servers').orderBy('createdAt', 'desc').get();
+    serverListEl.innerHTML = '';
+    snapshot.forEach(doc => {
+      const server = doc.data();
+      server.id = doc.id;
+      serverListEl.appendChild(createServerCard(server));
     });
   }
 
-  // Ana sayfa açıldığında renderla
-  renderServers();
+  // Sunucu kartı oluşturma
+  function createServerCard(server) {
+    const card = document.createElement('div');
+    card.className = 'server-card';
 
-  // EKLE butonuna basınca ekle.html e git
-  document.getElementById('addBtn').onclick = () => {
-    window.location.href = 'ekle.html';
+    const headerDiv = document.createElement('div');
+    headerDiv.className = 'server-header';
+
+    // Sunucu adı (tıklanınca yukarıda gösterilecek)
+    const nameEl = document.createElement('div');
+    nameEl.className = 'server-name';
+    nameEl.textContent = server.name;
+    nameEl.title = 'Sunucu adı (tıklayınca gösterilecek)';
+    nameEl.style.cursor = 'pointer';
+
+    // Link butonu
+    const linkBtn = document.createElement('button');
+    linkBtn.className = 'server-link-btn';
+    linkBtn.textContent = 'LİNK';
+    linkBtn.onclick = () => window.open(server.link, '_blank');
+
+    headerDiv.appendChild(nameEl);
+    headerDiv.appendChild(linkBtn);
+    card.appendChild(headerDiv);
+
+    // Sunucu linkini altına yazdır
+    const linkText = document.createElement('div');
+    linkText.style.marginTop = '6px';
+    linkText.style.color = '#555';
+    linkText.textContent = server.link;
+    card.appendChild(linkText);
+
+    // Oy ve yorum alanı
+    const votesDiv = document.createElement('div');
+    votesDiv.className = 'votes';
+
+    // Oy sayısı göster
+    const voteCount = document.createElement('span');
+    voteCount.className = 'vote-count';
+    voteCount.textContent = server.votes ? server.votes : 0;
+
+    // 👍🏻 Oy verme butonu
+    const upvoteBtn = document.createElement('button');
+    upvoteBtn.className = 'vote-btn';
+    upvoteBtn.textContent = '👍🏻';
+
+    // Oy verme fonksiyonu
+    upvoteBtn.onclick = async () => {
+      const userVoteRef = db.collection('servers').doc(server.id).collection('votes').doc(userId);
+      const userVoteDoc = await userVoteRef.get();
+
+      if (userVoteDoc.exists) {
+        alert('Zaten oy verdiniz.');
+        return;
+      }
+
+      // Oy sayısını artır
+      await db.collection('servers').doc(server.id).update({
+        votes: firebase.firestore.FieldValue.increment(1)
+      });
+
+      // Kullanıcının oy bilgisi eklenir
+      await userVoteRef.set({ voted: true });
+
+      // Sayfayı güncelle
+      fetchServers();
+    };
+
+    votesDiv.appendChild(upvoteBtn);
+    votesDiv.appendChild(voteCount);
+
+    card.appendChild(votesDiv);
+
+    // Yorumlar bölümü
+    const commentsDiv = document.createElement('div');
+    commentsDiv.className = 'comments';
+
+    // Yorumları çek ve göster
+    async function loadComments() {
+      commentsDiv.innerHTML = '';
+      const commentsSnapshot = await db.collection('servers').doc(server.id).collection('comments').orderBy('createdAt').get();
+
+      commentsSnapshot.forEach(commentDoc => {
+        const comment = commentDoc.data();
+        const commentEl = document.createElement('div');
+        commentEl.className = 'comment';
+
+        const commentText = document.createElement('div');
+        commentText.className = 'comment-text';
+        commentText.textContent = comment.text;
+
+        commentEl.appendChild(commentText);
+
+        // Sadece kendi yorumunu silebilirsin
+        if (comment.userId === userId) {
+          const deleteBtn = document.createElement('button');
+          deleteBtn.className = 'comment-delete-btn';
+          deleteBtn.textContent = '✖';
+          deleteBtn.onclick = async () => {
+            await db.collection('servers').doc(server.id).collection('comments').doc(commentDoc.id).delete();
+            loadComments();
+          };
+          commentEl.appendChild(deleteBtn);
+        }
+
+        commentsDiv.appendChild(commentEl);
+      });
+    }
+
+    loadComments();
+
+    // Yorum ekleme alanı
+    const addCommentDiv = document.createElement('div');
+    addCommentDiv.className = 'add-comment';
+
+    const commentInput = document.createElement('input');
+    commentInput.placeholder = 'Yorumunuzu yazın...';
+    commentInput.maxLength = 200;
+
+    const commentBtn = document.createElement('button');
+    commentBtn.textContent = 'Gönder';
+
+    commentBtn.onclick = async () => {
+      const text = commentInput.value.trim();
+      if (!text) return alert('Lütfen yorum yazın.');
+
+      // Kullanıcı daha önce yorum yaptı mı kontrol et
+      const existingComments = await db.collection('servers').doc(server.id).collection('comments')
+        .where('userId', '==', userId).get();
+
+      if (!existingComments.empty) {
+        alert('Zaten yorum yaptınız.');
+        return;
+      }
+
+      await db.collection('servers').doc(server.id).collection('comments').add({
+        text,
+        userId,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      commentInput.value = '';
+      loadComments();
+    };
+
+    addCommentDiv.appendChild(commentInput);
+    addCommentDiv.appendChild(commentBtn);
+    card.appendChild(commentsDiv);
+    card.appendChild(addCommentDiv);
+
+    return card;
+  }
+
+  // Sunucu ekleme butonu
+  document.getElementById('add-server-btn').onclick = () => {
+    const name = prompt('Sunucu Adı:').trim();
+    if (!name) return alert('Sunucu adı boş olamaz!');
+
+    const link = prompt('Sunucu Linki (https://discord.gg/...)').trim();
+    if (!link || (!link.startsWith('https://discord.gg/') && !link.startsWith('discord.gg/'))) {
+      return alert('Geçerli bir Discord linki girin!');
+    }
+
+    // Firestore’a ekle
+    db.collection('servers').add({
+      name,
+      link,
+      votes: 0,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      alert('Sunucu başarıyla eklendi!');
+      fetchServers();
+    });
   };
-  // Yönetim butonuna basınca yönetim.html e git
-  document.getElementById('adminBtn').onclick = () => {
+
+  // Yönetim paneli butonu (başka sayfaya yönlendirir)
+  document.getElementById('admin-panel-btn').onclick = () => {
     window.location.href = 'yonetim.html';
   };
+
+  // Sayfa açıldığında verileri çek
+  fetchServers();
+
 </script>
+
 </body>
 </html>
