@@ -7,235 +7,103 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 20px auto;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
     }
     header {
+      background-color: #fff;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      padding: 15px 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    h2 {
+    h1 {
       margin: 0;
     }
-    .button-link {
-      background: #4CAF50;
+    .btn {
+      background-color: #4CAF50;
       color: white;
-      padding: 8px 16px;
-      text-decoration: none;
-      border-radius: 6px;
-      font-weight: bold;
-    }
-    .button-link:hover {
-      background: #45a049;
-    }
-    .server-item {
-      border: 2px solid #2196F3;
-      border-radius: 20px;
-      padding: 15px;
-      margin-bottom: 15px;
-    }
-    .server-header {
-      font-weight: bold;
-      font-size: 18px;
-      color: #2196F3;
-    }
-    .server-link {
-      color: #555;
-      margin-top: 5px;
-      display: block;
-      word-break: break-word;
-      text-decoration: none;
-    }
-    .server-link:hover {
-      text-decoration: underline;
-    }
-    .comments-section {
-      margin-top: 10px;
-    }
-    .comment {
-      background: #f0f8ff;
-      padding: 8px;
-      border-radius: 8px;
-      margin-bottom: 6px;
-      position: relative;
-    }
-    .comment button {
-      position: absolute;
-      right: 8px;
-      top: 8px;
-      background: #e74c3c;
+      padding: 10px 16px;
       border: none;
-      color: white;
-      padding: 2px 6px;
-      border-radius: 4px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
       cursor: pointer;
-      font-size: 12px;
     }
-    .vote-section {
-      margin-top: 8px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .card {
+      background-color: white;
+      border-radius: 16px;
+      border: 2px solid #2196F3;
+      padding: 20px;
+      margin: 20px auto;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .link-button {
+      background-color: #2196F3;
+      color: white;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .votes {
+      margin-top: 10px;
     }
     .vote-btn {
       cursor: pointer;
-      user-select: none;
       font-size: 20px;
-    }
-    .vote-count {
-      font-weight: bold;
+      margin-right: 10px;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <h2>HAVEN PAYLAŞIM</h2>
-    <a href="ekle.html" class="button-link">EKLE</a>
+    <h1>HAVEN PAYLAŞIM</h1>
+    <div>
+      <a href="ekle.html" class="btn">EKLE</a>
+      <a href="yonetim.html" class="btn" style="background-color:#e91e63">YÖNETİM</a>
+    </div>
   </header>
 
-  <div id="serversList"></div>
+  <div id="sunucu-listesi"></div>
 
   <script>
-    const SUPABASE_URL = 'https://iweymvclgbtmnaglvgzp.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8';
+    const supabase = supabase.createClient(
+      'https://iweymvclgbtmnaglvgzp.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml3ZXltdmNsZ2J0bW5hZ2x2Z3pwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg2MjMxNzUsImV4cCI6MjA2NDE5OTE3NX0.zBPxdiI_hyx_VfAL0d5OECAbKOewxQRTr5pli89xmT8'
+    );
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const serversList = document.getElementById('serversList');
-
-    async function loadServers() {
-      serversList.innerHTML = 'Yükleniyor...';
-      const { data: servers, error } = await supabase
-        .from('servers')
-        .select('*')
-        .order('created_at', { ascending: false });
+    async function sunuculariYukle() {
+      const { data, error } = await supabase.from('servers').select('*').order('id', { ascending: false });
+      const liste = document.getElementById('sunucu-listesi');
+      liste.innerHTML = '';
 
       if (error) {
-        serversList.innerHTML = 'Veri alınırken hata oluştu.';
-        console.error(error);
-        return;
-      }
-      if (!servers.length) {
-        serversList.innerHTML = '<p>Henüz sunucu eklenmemiş.</p>';
+        console.error('Sunucu verileri alınamadı', error);
         return;
       }
 
-      serversList.innerHTML = '';
-      servers.forEach(server => {
+      data.forEach(sunucu => {
         const div = document.createElement('div');
-        div.className = 'server-item';
-
-        const nameDiv = document.createElement('div');
-        nameDiv.className = 'server-header';
-        nameDiv.textContent = server.name;
-        div.appendChild(nameDiv);
-
-        const linkA = document.createElement('a');
-        linkA.href = server.link;
-        linkA.target = '_blank';
-        linkA.className = 'server-link';
-        linkA.textContent = server.link;
-        div.appendChild(linkA);
-
-        const voteCountKey = `vote_${server.id}`;
-        const commentKey = `comment_${server.id}`;
-
-        let voteCount = parseInt(localStorage.getItem(voteCountKey)) || 0;
-        let userComment = localStorage.getItem(commentKey) || '';
-
-        const voteSection = document.createElement('div');
-        voteSection.className = 'vote-section';
-
-        const btnUp = document.createElement('span');
-        btnUp.className = 'vote-btn';
-        btnUp.textContent = '👍🏻';
-        btnUp.title = 'Oy Ver';
-
-        const voteDisplay = document.createElement('span');
-        voteDisplay.className = 'vote-count';
-        voteDisplay.textContent = voteCount;
-
-        const btnDown = document.createElement('span');
-        btnDown.className = 'vote-btn';
-        btnDown.textContent = '👎🏻';
-        btnDown.title = 'Oy Kaldır';
-
-        voteSection.appendChild(btnUp);
-        voteSection.appendChild(voteDisplay);
-        voteSection.appendChild(btnDown);
-
-        div.appendChild(voteSection);
-
-        const commentsSection = document.createElement('div');
-        commentsSection.className = 'comments-section';
-
-        if (userComment) {
-          const commentDiv = document.createElement('div');
-          commentDiv.className = 'comment';
-          commentDiv.textContent = userComment;
-
-          const delBtn = document.createElement('button');
-          delBtn.textContent = 'X';
-          delBtn.title = 'Yorumu Sil';
-          delBtn.onclick = () => {
-            if (confirm('Yorumu silmek istediğine emin misin?')) {
-              localStorage.removeItem(commentKey);
-              loadServers();
-            }
-          };
-          commentDiv.appendChild(delBtn);
-          commentsSection.appendChild(commentDiv);
-        } else {
-          const input = document.createElement('input');
-          input.type = 'text';
-          input.placeholder = 'Yorumunuzu yazın...';
-          input.style.width = '80%';
-          input.style.marginRight = '10px';
-
-          const addCommentBtn = document.createElement('button');
-          addCommentBtn.textContent = 'Yorum Ekle';
-
-          addCommentBtn.onclick = () => {
-            const val = input.value.trim();
-            if (!val) {
-              alert('Lütfen yorum yazın!');
-              return;
-            }
-            localStorage.setItem(commentKey, val);
-            loadServers();
-          };
-
-          commentsSection.appendChild(input);
-          commentsSection.appendChild(addCommentBtn);
-        }
-
-        div.appendChild(commentsSection);
-
-        btnUp.onclick = () => {
-          if (voteCount === 0) {
-            localStorage.setItem(voteCountKey, '1');
-            loadServers();
-          } else {
-            alert('Zaten oy verdiniz!');
-          }
-        };
-        btnDown.onclick = () => {
-          if (voteCount === 1) {
-            localStorage.setItem(voteCountKey, '0');
-            loadServers();
-          } else {
-            alert('Henüz oy vermediniz!');
-          }
-        };
-
-        serversList.appendChild(div);
+        div.className = 'card';
+        div.innerHTML = `
+          <h3>${sunucu.name}</h3>
+          <a href="${sunucu.link.startsWith('http') ? sunucu.link : 'https://' + sunucu.link}" class="link-button" target="_blank">Linke Git</a>
+          <div class="votes">
+            👍🏻 <span>0</span>
+            👎🏻 <span>0</span>
+          </div>
+        `;
+        liste.appendChild(div);
       });
     }
 
-    loadServers();
+    sunuculariYukle();
   </script>
 
 </body>
